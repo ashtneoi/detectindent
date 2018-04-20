@@ -1,6 +1,7 @@
 use std::env;
 use std::fs::File;
 use std::io::{self, BufRead};
+use std::iter::Peekable;
 use std::process::exit;
 
 #[derive(Debug)]
@@ -38,14 +39,53 @@ fn process_args<'a>(args: &[&'a str])
     Ok((args[0], output_type))
 }
 
-fn read_initial_ws(filename: &str) -> io::Result<Vec<(i32, i32)>> {
+struct PeekWhile<'a, I, P>
+where
+    I: 'a + Iterator,
+    P: FnMut(&I::Item) -> bool,
+{
+    iter: &'a mut Peekable<I>,
+    predicate: P,
+}
+
+impl<'a, I, P> Iterator for PeekWhile<'a, I, P>
+where
+    I: Iterator,
+    P: FnMut(&I::Item) -> bool,
+{
+    type Item = I::Item;
+
+    fn next(&mut self) -> Option<I::Item> {
+        let take = match self.iter.peek() {
+            Some(ref x) => Some((self.predicate)(x)),
+            None => None,
+        };
+        match take {
+            Some(true) => Some(self.iter.next().unwrap()),
+            _ => None,
+        }
+    }
+}
+
+fn peek_while<'a, I, P>(iter: &'a mut Peekable<I>, predicate: P)
+    -> PeekWhile<I, P>
+where
+    I: Iterator,
+    P: FnMut(&I::Item) -> bool,
+{
+    PeekWhile { iter: iter, predicate }
+}
+
+fn count_indentation(filename: &str) -> io::Result<Vec<(u32, u32)>> {
     let file = File::open(filename)?;
     let mut lines = io::BufReader::new(file).lines();
+
+    let mut counts = Vec::new();
 
     for _ in 0..100 {
         let maybe_line = (&mut lines).skip_while(|x| {
             match x {
-                Ok(ref line) => !(
+                Ok(line) => !(
                     line.starts_with('\t') || line.starts_with(' ')
                 ),
                 Err(_) => false,
@@ -56,10 +96,16 @@ fn read_initial_ws(filename: &str) -> io::Result<Vec<(i32, i32)>> {
             Some(Err(e)) => return Err(e),
             None => break,
         };
-        println!("{}", &line);
+
+        let mut chars = line.chars().peekable();
+        let tab_count = peek_while(&mut chars, |&x| { x == '\t' })
+            .count() as u32;
+        let sp_count = peek_while(&mut chars, |&x| { x == ' ' })
+            .count() as u32;
+        counts.push((tab_count, sp_count));
     }
 
-    Ok(vec![])
+    Ok(counts)
 }
 
 fn main() {
@@ -70,11 +116,11 @@ fn main() {
             eprintln!("error: {}", e);
             exit(2);
         });
-    println!("{} -> {:?}", filename, output_type);
 
-    let initial_ws = read_initial_ws(&filename)
+    let counts = count_indentation(&filename)
         .unwrap_or_else(|e| {
             eprintln!("error: {}", e);
             exit(2);
         });
+    println!("{:?}", counts);
 }
