@@ -41,7 +41,7 @@ fn process_args<'a>(args: &[&'a str])
     Ok((args[0], output_type))
 }
 
-fn count_indentation(filename: &str) -> io::Result<Vec<(u32, u32)>> {
+fn count_indents(filename: &str) -> io::Result<Vec<(u32, u32)>> {
     let file = File::open(filename)?;
     let mut lines = io::BufReader::new(file).lines();
 
@@ -67,6 +67,8 @@ fn count_indentation(filename: &str) -> io::Result<Vec<(u32, u32)>> {
             .count() as u32;
         let sp_count = peek_while(&mut chars, |&x| { x == ' ' })
             .count() as u32;
+        // TODO: chars.peek() == Some(&'\t') is probably an error. (Not sure
+        // how best to return it, though)
         counts.push((tab_count, sp_count));
     }
 
@@ -82,7 +84,7 @@ fn main() {
             exit(2);
         });
 
-    let counts = count_indentation(&filename)
+    let counts = count_indents(&filename)
         .unwrap_or_else(|e| {
             eprintln!("error: {}", e);
             exit(2);
