@@ -5,3 +5,4 @@ authors = ["ashtneoi <ashtneoi@gmail.com>"]
 license = "MIT"
 
 [dependencies]
+num = "0.1.42"
