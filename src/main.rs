@@ -1,7 +1,9 @@
+extern crate neoilib;
+
+use neoilib::peek_while;
 use std::env;
 use std::fs::File;
 use std::io::{self, BufRead};
-use std::iter::Peekable;
 use std::process::exit;
 
 #[derive(Debug)]
@@ -37,43 +39,6 @@ fn process_args<'a>(args: &[&'a str])
     };
 
     Ok((args[0], output_type))
-}
-
-struct PeekWhile<'a, I, P>
-where
-    I: 'a + Iterator,
-    P: FnMut(&I::Item) -> bool,
-{
-    iter: &'a mut Peekable<I>,
-    predicate: P,
-}
-
-impl<'a, I, P> Iterator for PeekWhile<'a, I, P>
-where
-    I: Iterator,
-    P: FnMut(&I::Item) -> bool,
-{
-    type Item = I::Item;
-
-    fn next(&mut self) -> Option<I::Item> {
-        let take = match self.iter.peek() {
-            Some(ref x) => Some((self.predicate)(x)),
-            None => None,
-        };
-        match take {
-            Some(true) => Some(self.iter.next().unwrap()),
-            _ => None,
-        }
-    }
-}
-
-fn peek_while<'a, I, P>(iter: &'a mut Peekable<I>, predicate: P)
-    -> PeekWhile<I, P>
-where
-    I: Iterator,
-    P: FnMut(&I::Item) -> bool,
-{
-    PeekWhile { iter: iter, predicate }
 }
 
 fn count_indentation(filename: &str) -> io::Result<Vec<(u32, u32)>> {
