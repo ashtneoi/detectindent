@@ -1,6 +1,8 @@
 extern crate neoilib;
+extern crate num;
 
 use neoilib::peek_while;
+use num::Integer;
 use std::env;
 use std::fs::File;
 use std::io::{self, BufRead};
@@ -71,8 +73,65 @@ fn count_indents(filename: &str) -> io::Result<Vec<(u32, u32)>> {
         // how best to return it, though)
         counts.push((tab_count, sp_count));
     }
+    assert!(counts.len() > 0); // TODO: not a bug
 
     Ok(counts)
+}
+
+fn maybe_gcd(x: u32, y: u32) -> u32 {
+    match x {
+        0 => match y {
+            0 => 0,
+            yy => yy,
+        },
+        xx => match y {
+            0 => xx,
+            yy => xx.gcd(&yy),
+        },
+    }
+}
+
+fn detect_indent(counts: &Vec<(u32, u32)>) -> (u32, u32) {
+    let mut tab_gcd = 0; // 0 means infinity, I guess
+    let mut sp_gcd = 0;
+    for &(tab_count, sp_count) in counts {
+        tab_gcd = maybe_gcd(tab_gcd, tab_count);
+        sp_gcd = maybe_gcd(sp_gcd, sp_count);
+    }
+    (tab_gcd, sp_gcd)
+}
+
+fn format_indent((tab_ind, sp_ind): (u32, u32), output_type: OutputType)
+    -> String
+{
+    assert!(!(tab_ind == 0 && sp_ind == 0));
+    // TODO: Figure out indent unit at runtime.
+    // TODO: Don't assume tab+space tab width is 2*unit.
+    let unit = 4;
+    assert!(sp_ind.is_multiple_of(&unit)); // TODO: not a bug
+    match output_type {
+        OutputType::Generic => {
+            let (kind, count) = match (tab_ind, sp_ind) {
+                (ti, 0) => ("tab", (unit*ti).to_string()),
+                (0, si) => ("space", si.to_string()),
+                (ti, si) => ("tab+space", format!("{}+{}", 2*unit*ti, si)),
+            };
+            format!("kind={} count={}", kind, count)
+        },
+        OutputType::Vim => {
+            let (expandtab, tabstop, shiftwidth) = match (tab_ind, sp_ind) {
+                (ti, 0) => (false, unit*ti, unit*ti),
+                (0, si) => (true, si, si),
+                (ti, si) => (false, 2*unit*ti, si),
+            };
+            format!(
+                "set {}expandtab tabstop={} shiftwidth={}",
+                if expandtab { "" } else { "no" },
+                tabstop,
+                shiftwidth,
+            )
+        },
+    }
 }
 
 fn main() {
@@ -89,5 +148,8 @@ fn main() {
             eprintln!("error: {}", e);
             exit(2);
         });
-    println!("{:?}", counts);
+
+    let indent = detect_indent(&counts);
+
+    println!("{}", format_indent(indent, output_type));
 }
