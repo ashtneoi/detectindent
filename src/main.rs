@@ -46,8 +46,7 @@ fn process_args<'a>(args: &[&'a str])
     Ok((args[0], output_format, def_tab_width))
 }
 
-fn count_indents(filename: &str) -> io::Result<(bool, Vec<u32>)> {
-    let file = File::open(filename)?;
+fn count_indents(file: File) -> io::Result<(bool, Vec<u32>)> {
     let mut lines = io::BufReader::new(file).lines();
 
     let mut tabs = false;
@@ -144,10 +143,10 @@ fn format_indent((tab_width, sp_unit): (u32, u32), output_format: OutputFormat)
     }
 }
 
-fn do_file(filename: &str, output_format: OutputFormat, def_tab_width: u32)
+fn do_file(file: File, output_format: OutputFormat, def_tab_width: u32)
     -> Result<String, String>
 {
-    let (tabs, sp_counts) = count_indents(&filename)
+    let (tabs, sp_counts) = count_indents(file)
         .map_err(|e| e.to_string())?;
     let indent = detect_indent(tabs, &sp_counts, def_tab_width)?;
     Ok(format_indent(indent, output_format))
@@ -156,8 +155,10 @@ fn do_file(filename: &str, output_format: OutputFormat, def_tab_width: u32)
 fn do_cli(owned_args: &[String]) -> Result<(), String> {
     let args: Vec<_> = owned_args.iter().map(|s| s.as_str()).collect();
     let (filename, output_format, def_tab_width) = process_args(&args)?;
+    let file = File::open(filename).
+        map_err(|e| e.to_string())?;
 
-    let out = do_file(&filename, output_format, def_tab_width)?;
+    let out = do_file(file, output_format, def_tab_width)?;
     println!("{}", out);
     Ok(())
 }
