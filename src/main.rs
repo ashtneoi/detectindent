@@ -27,12 +27,8 @@ fn exit_with_usage() -> ! {
 fn process_args<'a>(args: &[&'a str])
     -> Result<(&'a str, OutputFormat, u32), String>
 {
-    if args.len() == 0 {
+    if args.len() != 3 {
         exit_with_usage();
-    } else if args.len() < 3 {
-        return Err("Too few arguments".to_string());
-    } else if args.len() > 3 {
-        return Err("Too many arguments".to_string());
     }
 
     let output_format = match args[1] {
