@@ -83,7 +83,6 @@ where
             sp_counts.push(sp_count);
         }
     }
-    assert!(sp_counts.len() > 0); // TODO: not a bug
 
     Ok((tabs, sp_counts))
 }
@@ -156,6 +155,9 @@ where
 {
     let (tabs, sp_counts) = count_indents(lines)
         .map_err(|e| e.to_string())?;
+    if !tabs && sp_counts.len() == 0 {
+        return Err("No indentation".to_string());
+    }
     let indent = detect_indent(tabs, &sp_counts, def_tab_width)?;
     Ok(format_indent(indent, output_format))
 }
