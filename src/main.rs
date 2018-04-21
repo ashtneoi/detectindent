@@ -79,7 +79,9 @@ where
             .count() as u32;
         // TODO: chars.peek() == Some(&'\t') is probably an error. (Not sure
         // how best to return it, though.)
-        sp_counts.push(sp_count);
+        if sp_count > 0 {
+            sp_counts.push(sp_count);
+        }
     }
     assert!(sp_counts.len() > 0); // TODO: not a bug
 
