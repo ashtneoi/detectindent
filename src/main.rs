@@ -144,26 +144,29 @@ fn format_indent((tab_width, sp_unit): (u32, u32), output_format: OutputFormat)
     }
 }
 
+fn do_file(filename: &str, output_format: OutputFormat, def_tab_width: u32)
+    -> Result<String, String>
+{
+    let (tabs, sp_counts) = count_indents(&filename)
+        .map_err(|e| e.to_string())?;
+    let indent = detect_indent(tabs, &sp_counts, def_tab_width)?;
+    Ok(format_indent(indent, output_format))
+}
+
+fn do_cli(owned_args: &[String]) -> Result<(), String> {
+    let args: Vec<_> = owned_args.iter().map(|s| s.as_str()).collect();
+    let (filename, output_format, def_tab_width) = process_args(&args)?;
+
+    let out = do_file(&filename, output_format, def_tab_width)?;
+    println!("{}", out);
+    Ok(())
+}
+
 fn main() {
     let owned_args: Vec<_> = env::args().skip(1).collect();
-    let args: Vec<_> = owned_args.iter().map(|s| s.as_str()).collect();
-    let (filename, output_format, def_tab_width) = process_args(&args)
-        .unwrap_or_else(|e| {
-            eprintln!("error: {}", e);
-            exit(2);
-        });
-
-    let (tabs, sp_counts) = count_indents(&filename)
+    do_cli(&owned_args)
         .unwrap_or_else(|e| {
             eprintln!("error: {}", e);
             exit(1);
         });
-
-    let indent = detect_indent(tabs, &sp_counts, def_tab_width)
-        .unwrap_or_else(|e| {
-            eprintln!("error: {}", e);
-            exit(1);
-        });
-
-    println!("{}", format_indent(indent, output_format));
 }
