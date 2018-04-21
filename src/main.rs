@@ -8,6 +8,9 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::process::exit;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Debug)]
 enum OutputFormat {
     Generic,
@@ -46,9 +49,10 @@ fn process_args<'a>(args: &[&'a str])
     Ok((args[0], output_format, def_tab_width))
 }
 
-fn count_indents(file: File) -> io::Result<(bool, Vec<u32>)> {
-    let mut lines = io::BufReader::new(file).lines();
-
+fn count_indents<L>(mut lines: L) -> io::Result<(bool, Vec<u32>)>
+where
+    L: Iterator<Item = io::Result<String>>,
+{
     let mut tabs = false;
     let mut sp_counts = Vec::new();
 
@@ -143,10 +147,12 @@ fn format_indent((tab_width, sp_unit): (u32, u32), output_format: OutputFormat)
     }
 }
 
-fn do_file(file: File, output_format: OutputFormat, def_tab_width: u32)
+fn do_lines<L>(lines: L, output_format: OutputFormat, def_tab_width: u32)
     -> Result<String, String>
+where
+    L: Iterator<Item = io::Result<String>>,
 {
-    let (tabs, sp_counts) = count_indents(file)
+    let (tabs, sp_counts) = count_indents(lines)
         .map_err(|e| e.to_string())?;
     let indent = detect_indent(tabs, &sp_counts, def_tab_width)?;
     Ok(format_indent(indent, output_format))
@@ -157,8 +163,9 @@ fn do_cli(owned_args: &[String]) -> Result<(), String> {
     let (filename, output_format, def_tab_width) = process_args(&args)?;
     let file = File::open(filename).
         map_err(|e| e.to_string())?;
+    let lines = io::BufReader::new(file).lines();
 
-    let out = do_file(file, output_format, def_tab_width)?;
+    let out = do_lines(lines, output_format, def_tab_width)?;
     println!("{}", out);
     Ok(())
 }
