@@ -4,6 +4,14 @@ version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "detectindent"
+version = "0.1.0"
+dependencies = [
+ "neoilib 0.1.0 (git+https://github.com/ashtneoi/neoilib.git)",
+ "num 0.1.42 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "fuchsia-zircon"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -16,14 +24,6 @@ dependencies = [
 name = "fuchsia-zircon-sys"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "indentdetect"
-version = "0.1.0"
-dependencies = [
- "neoilib 0.1.0 (git+https://github.com/ashtneoi/neoilib.git)",
- "num 0.1.42 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "libc"
