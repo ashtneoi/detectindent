@@ -33,7 +33,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "neoilib"
 version = "0.1.0"
-source = "git+https://github.com/ashtneoi/neoilib.git#84688ee6151fe79927a536dd016c2b7088d5e14c"
+source = "git+https://github.com/ashtneoi/neoilib.git#017ac27af946749c488fbeba0ac5f3d31fd68e42"
 
 [[package]]
 name = "num"

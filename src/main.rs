@@ -1,7 +1,7 @@
 extern crate neoilib;
 extern crate num;
 
-use neoilib::peek_while;
+use neoilib::iter::peek_while;
 use num::Integer;
 use std::env;
 use std::fs::File;
